@@ -161,28 +161,77 @@
         .btn-accion:hover{background:var(--hover)}
         .btn-accion.activo{background:var(--primario);color:#fff;border-color:var(--primario)}
 
+        /* --- FILTROS --- */
+        .filtros{display:flex;gap:10px;margin:-5px 0 20px;flex-wrap:wrap}
+        .filtros select{
+            background:var(--tarjeta);color:var(--texto);border:1px solid var(--borde);border-radius:20px;
+            padding:8px 14px;font-size:13px;cursor:pointer;outline:none
+        }
+        .filtros select:hover{background:var(--hover)}
+
+        /* --- BANNER ARCHIVO LOCAL --- */
+        .banner-archivo{
+            position:fixed;top:60px;left:0;width:100%;background:#3a2a00;color:#ffd479;padding:10px 20px;
+            font-size:13px;display:none;justify-content:center;align-items:center;gap:14px;z-index:95;
+            flex-wrap:wrap;text-align:center
+        }
+        .banner-archivo.activo{display:flex}
+        .banner-archivo button{
+            width:auto;padding:7px 14px;border-radius:6px;background:#544000;color:#ffd479;font-size:12.5px;border:none;cursor:pointer
+        }
+        .banner-archivo button:hover{background:#6b5200}
+        .banner-archivo .cerrar-banner{cursor:pointer;font-weight:bold;padding:0 6px;font-size:16px;color:#ffd479}
+        body.con-banner .lateral{top:96px;height:calc(100vh - 96px)}
+        body.con-banner main{margin-top:112px}
+
+        /* --- TOAST --- */
+        .toast{
+            position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+            background:#222;color:#fff;padding:12px 22px;border-radius:30px;font-size:14px;
+            box-shadow:var(--sombra);z-index:400;opacity:0;pointer-events:none;
+            transition:opacity .25s ease, transform .25s ease
+        }
+        .toast.activo{opacity:1;transform:translateX(-50%) translateY(0)}
+
         /* --- REPRODUCTOR --- */
         .play{
             display:none;position:fixed;inset:0;background:rgba(0,0,0,.97);z-index:200;
-            align-items:center;justify-content:center;padding:25px;flex-direction:column
+            align-items:center;justify-content:center;padding:25px;overflow-y:auto
         }
         .play.activo{display:flex}
-        .x{position:absolute;top:20px;right:30px;font-size:35px;color:white;cursor:pointer;font-weight:bold;user-select:none}
+        .x{position:absolute;top:20px;right:30px;font-size:35px;color:white;cursor:pointer;font-weight:bold;user-select:none;z-index:2}
         .x:hover{color:var(--primario)}
-        iframe{width:100%;max-width:1280px;aspect-ratio:16/9;border:none;border-radius:10px 10px 0 0}
+        .zona-player{display:flex;gap:20px;width:100%;max-width:1620px;align-items:flex-start;justify-content:center;flex-wrap:wrap;margin:auto}
+        .contenedor-player{flex:1 1 700px;max-width:1280px}
+        iframe{width:100%;aspect-ratio:16/9;border:none;border-radius:10px 10px 0 0;display:block}
         .barra-player{
-            width:100%;max-width:1280px;background:#181818;border-radius:0 0 10px 10px;padding:14px 20px;
+            width:100%;background:#181818;border-radius:0 0 10px 10px;padding:14px 20px;
             display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap
         }
         .datos-player{min-width:0}
         .datos-player .tit-player{color:#fff;font-size:15px;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60vw}
         .datos-player .can-player{color:#aaa;font-size:13px}
-        .acciones-player{display:flex;gap:10px}
+        .acciones-player{display:flex;gap:10px;flex-wrap:wrap}
         .btn-player{
             font-size:13px;padding:8px 16px;border-radius:20px;background:#272727;border:none;color:#fff;cursor:pointer
         }
         .btn-player:hover{background:#333}
         .btn-player.activo{background:var(--primario)}
+
+        .siguientes{
+            width:340px;max-height:calc(100vh - 50px);overflow-y:auto;background:#141414;
+            border-radius:10px;padding:14px;flex-shrink:0
+        }
+        .siguientes-tit{color:#fff;font-size:14px;font-weight:600;margin-bottom:10px}
+        .sig-item{display:flex;gap:8px;cursor:pointer;padding:6px;border-radius:8px;margin-bottom:4px}
+        .sig-item:hover{background:#222}
+        .sig-item img{width:130px;aspect-ratio:16/9;border-radius:6px;object-fit:cover;flex-shrink:0}
+        .sig-info{min-width:0}
+        .sig-tit{color:#fff;font-size:12.5px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+        .sig-can{color:#999;font-size:11px;margin-top:3px}
+        @media(max-width:1100px){
+            .siguientes{width:100%;max-height:280px}
+        }
 
         /* --- PANEL CONFIGURACION --- */
         .panel-conf{
@@ -260,6 +309,12 @@
     </div>
 </header>
 
+<div class="banner-archivo" id="banner-archivo">
+    <span>⚠️ Estás abriendo este archivo directamente desde tu disco. Algunos videos pueden tardar en reproducirse o no arrancar por restricciones del navegador.</span>
+    <button onclick="copiarComandoServidor()">📋 Copiar solución (servidor local)</button>
+    <span class="cerrar-banner" onclick="cerrarBannerArchivo()">✕</span>
+</div>
+
 <!-- Menú Configuración -->
 <div class="menu-desp" id="menu-configuracion">
     <div class="opc" onclick="abrirPanelConfiguracion()">⚙️ Configuración</div>
@@ -314,25 +369,51 @@
 </nav>
 
 <main id="contenido-principal">
+    <div class="filtros" id="barra-filtros">
+        <select id="filtro-orden" onchange="cambiarFiltros()">
+            <option value="relevance">Relevancia</option>
+            <option value="date">Más recientes</option>
+            <option value="viewCount">Más vistos</option>
+            <option value="rating">Mejor calificados</option>
+        </select>
+        <select id="filtro-duracion" onchange="cambiarFiltros()">
+            <option value="any">Cualquier duración</option>
+            <option value="short">Cortos (&lt;4 min)</option>
+            <option value="medium">Medios (4-20 min)</option>
+            <option value="long">Largos (&gt;20 min)</option>
+        </select>
+    </div>
     <div class="grid" id="lista-videos">
         <div class="cargando">Cargando videos...</div>
     </div>
 </main>
 
-<div class="play" id="reproductor">
+<div class="play" id="reproductor" onclick="cerrarReproductor()">
     <span class="x" onclick="cerrarReproductor()">×</span>
-    <iframe id="marco-video" allow="autoplay;fullscreen;picture-in-picture"></iframe>
-    <div class="barra-player">
-        <div class="datos-player">
-            <div class="tit-player" id="titulo-player"></div>
-            <div class="can-player" id="canal-player"></div>
+    <div class="zona-player" onclick="event.stopPropagation()">
+        <div class="contenedor-player">
+            <iframe id="marco-video" allow="autoplay;fullscreen;picture-in-picture"></iframe>
+            <div class="barra-player">
+                <div class="datos-player">
+                    <div class="tit-player" id="titulo-player"></div>
+                    <div class="can-player" id="canal-player"></div>
+                </div>
+                <div class="acciones-player">
+                    <button class="btn-player" id="btn-like-player" onclick="alternarMeGustaActual()">👍 Me gusta</button>
+                    <button class="btn-player" id="btn-vmt-player" onclick="alternarVerMasTardeActual()">⏰ Ver más tarde</button>
+                    <button class="btn-player" onclick="compartirVideoActual()">🔗 Compartir</button>
+                    <button class="btn-player" onclick="abrirEnYoutube()">▶️ Ver en YouTube</button>
+                </div>
+            </div>
         </div>
-        <div class="acciones-player">
-            <button class="btn-player" id="btn-like-player" onclick="alternarMeGustaActual()">👍 Me gusta</button>
-            <button class="btn-player" id="btn-vmt-player" onclick="alternarVerMasTardeActual()">⏰ Ver más tarde</button>
+        <div class="siguientes">
+            <div class="siguientes-tit">Reproduciendo a continuación</div>
+            <div id="lista-siguientes"></div>
         </div>
     </div>
 </div>
+
+<div class="toast" id="toast"></div>
 
 <!-- Panel Configuracion Completo -->
 <div class="panel-conf" id="panel-configuracion">
@@ -357,6 +438,11 @@
             <button class="boton-tema" onclick="hacerLogin()">🔑 Iniciar sesión</button>
         </div>
 
+        <div class="conf-grupo" id="grupo-servidor-local">
+            <label>Reproducción local</label>
+            <button class="boton-tema" onclick="copiarComandoServidor()">📋 Copiar comando de servidor local</button>
+        </div>
+
         <div class="creditos">
             <strong>CRÉDITOS:</strong><br>
             siwi xc<br>
@@ -375,6 +461,8 @@ let cargandoMas = false;
 let busquedaActual = "videos populares 2026";
 let videoActual = null;
 let vistaGuardadosActual = null; // 'historial' | 'verMasTarde' | 'meGusta' | null
+let filtroOrden = 'relevance';
+let filtroDuracion = 'any';
 
 // Guardados locales
 let historial = JSON.parse(localStorage.getItem('historialYoutubeLite')) || [];
@@ -382,10 +470,68 @@ let verMasTarde = JSON.parse(localStorage.getItem('verMasTardeYoutubeLite')) || 
 let meGusta = JSON.parse(localStorage.getItem('meGustaYoutubeLite')) || [];
 
 window.onload = () => {
+    restaurarPreferencias();
     restaurarSesion();
+    verificarArchivoLocal();
     ejecutarBusqueda(busquedaActual);
     iniciarIntro();
 };
+
+document.addEventListener('keydown', e=>{
+    if(e.key !== 'Escape') return;
+    if(document.getElementById('reproductor').classList.contains('activo')) cerrarReproductor();
+    else if(document.getElementById('panel-configuracion').classList.contains('activo')) cerrarPanelConfiguracion();
+    else document.querySelectorAll('.menu-desp').forEach(m=>m.classList.remove('activo'));
+});
+
+function mostrarToast(mensaje){
+    const toast = document.getElementById('toast');
+    toast.textContent = mensaje;
+    toast.classList.add('activo');
+    clearTimeout(toast._timeout);
+    toast._timeout = setTimeout(()=> toast.classList.remove('activo'), 2200);
+}
+
+// --- REPRODUCCIÓN DESDE DISCO (file://) ---
+function verificarArchivoLocal(){
+    const esArchivoLocal = location.protocol === 'file:';
+    const yaOculto = localStorage.getItem('bannerArchivoOculto') === '1';
+    document.getElementById('grupo-servidor-local').style.display = esArchivoLocal ? 'block' : 'none';
+    if(esArchivoLocal && !yaOculto){
+        document.getElementById('banner-archivo').classList.add('activo');
+        document.body.classList.add('con-banner');
+    }
+}
+function cerrarBannerArchivo(){
+    document.getElementById('banner-archivo').classList.remove('activo');
+    document.body.classList.remove('con-banner');
+    localStorage.setItem('bannerArchivoOculto', '1');
+}
+function copiarComandoServidor(){
+    const comando = 'cd "carpeta-donde-esta-el-archivo" && python3 -m http.server 8000';
+    const explicacion = comando + '\n\nLuego abre esta dirección en el navegador: http://localhost:8000\n\nEsto sirve la página desde tu propia máquina (sigue siendo 100% local, sin subir nada a internet) y evita que el navegador bloquee la reproducción por venir de un archivo en disco.';
+    if(navigator.clipboard && location.protocol !== 'file:'){
+        navigator.clipboard.writeText(comando);
+    } else {
+        try{ navigator.clipboard.writeText(comando); }catch(e){}
+    }
+    alert(explicacion);
+}
+
+// --- PREFERENCIAS (tema y color) ---
+function restaurarPreferencias(){
+    const temaGuardado = localStorage.getItem('temaYoutubeLite');
+    const colorGuardado = localStorage.getItem('colorYoutubeLite');
+    if(temaGuardado === 'claro'){
+        temaOscuroActivo = false;
+        document.body.classList.add('tema-claro');
+        document.getElementById('boton-tema').innerHTML = '☀️ Cambiar a tema oscuro';
+    }
+    if(colorGuardado){
+        document.documentElement.style.setProperty('--primario', colorGuardado);
+        document.getElementById('selector-color').value = colorGuardado;
+    }
+}
 
 function iniciarIntro(){
     const intro = document.getElementById('intro');
@@ -446,6 +592,7 @@ async function ejecutarBusqueda(textoBuscar = null){
     cargandoMas = false;
     document.getElementById('sugerencias').classList.remove('activo');
     document.querySelectorAll('.menu-desp').forEach(m=>m.classList.remove('activo'));
+    document.getElementById('barra-filtros').style.display = 'flex';
     marcarInicioActivo(busqueda === 'videos populares 2026');
 
     const lista = document.getElementById('lista-videos');
@@ -471,7 +618,8 @@ async function cargarMasVideos(esNuevaBusqueda = false){
     const lista = document.getElementById('lista-videos');
 
     try{
-        let url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(busquedaActual)}&maxResults=24&type=video&key=${API_KEY}`;
+        let url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(busquedaActual)}&maxResults=24&type=video&order=${filtroOrden}&key=${API_KEY}`;
+        if(filtroDuracion !== 'any') url += `&videoDuration=${filtroDuracion}`;
         if(paginaSiguiente) url += `&pageToken=${paginaSiguiente}`;
 
         const respuesta = await fetch(url);
@@ -594,16 +742,75 @@ window.addEventListener('scroll', ()=>{
 function abrirVideo(video){
     agregarAHistorial(video);
     videoActual = video;
-    document.getElementById('marco-video').src = `https://www.youtube.com/embed/${video.id.videoId}?autoplay=1`;
+    document.getElementById('marco-video').src = `https://www.youtube.com/embed/${video.id.videoId}?autoplay=1&rel=0&modestbranding=1`;
     document.getElementById('titulo-player').textContent = video.snippet.title;
     document.getElementById('canal-player').textContent = video.snippet.channelTitle;
     actualizarBotonesPlayer();
     document.getElementById('reproductor').classList.add('activo');
+    cargarSiguientes(video);
 }
 function cerrarReproductor(){
     document.getElementById('marco-video').src = "";
     document.getElementById('reproductor').classList.remove('activo');
     videoActual = null;
+}
+
+function compartirVideoActual(){
+    if(!videoActual) return;
+    const url = `https://youtu.be/${videoActual.id.videoId}`;
+    if(navigator.clipboard){
+        navigator.clipboard.writeText(url).then(()=> mostrarToast('Enlace copiado al portapapeles'))
+            .catch(()=> prompt('Copia el enlace:', url));
+    } else {
+        prompt('Copia el enlace:', url);
+    }
+}
+function abrirEnYoutube(){
+    if(!videoActual) return;
+    window.open(`https://www.youtube.com/watch?v=${videoActual.id.videoId}`, '_blank');
+}
+
+async function cargarSiguientes(video){
+    const cont = document.getElementById('lista-siguientes');
+    cont.innerHTML = `<div class="cargando" style="padding:15px 0">Cargando sugerencias...</div>`;
+    try{
+        const palabrasClave = video.snippet.title.split(' ').slice(0,4).join(' ');
+        const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(palabrasClave)}&maxResults=10&type=video&key=${API_KEY}`;
+        const respuesta = await fetch(url);
+        const datos = await respuesta.json();
+        if(datos.error || !datos.items){
+            cont.innerHTML = `<div class="cargando" style="padding:15px 0">No se pudieron cargar sugerencias</div>`;
+            return;
+        }
+        cont.innerHTML = '';
+        datos.items
+            .filter(v => v.id && v.id.videoId && v.id.videoId !== video.id.videoId)
+            .slice(0,8)
+            .forEach(v=>{
+                const item = document.createElement('div');
+                item.className = 'sig-item';
+                const img = document.createElement('img');
+                img.src = urlMiniatura(v);
+                img.alt = v.snippet.title;
+                const info = document.createElement('div');
+                info.className = 'sig-info';
+                const tit = document.createElement('div');
+                tit.className = 'sig-tit';
+                tit.textContent = v.snippet.title;
+                const can = document.createElement('div');
+                can.className = 'sig-can';
+                can.textContent = v.snippet.channelTitle;
+                info.appendChild(tit);
+                info.appendChild(can);
+                item.appendChild(img);
+                item.appendChild(info);
+                item.onclick = ()=> abrirVideo(v);
+                cont.appendChild(item);
+            });
+        if(!cont.children.length) cont.innerHTML = `<div class="cargando" style="padding:15px 0">Sin sugerencias por ahora</div>`;
+    }catch(e){
+        cont.innerHTML = `<div class="cargando" style="padding:15px 0">Error al cargar sugerencias</div>`;
+    }
 }
 document.getElementById('q').addEventListener('keydown',e=>{
     if(e.key==='Enter') ejecutarBusqueda();
@@ -645,10 +852,19 @@ function alternarTema(){
     temaOscuroActivo = !temaOscuroActivo;
     document.body.classList.toggle('tema-claro');
     boton.innerHTML = temaOscuroActivo ? '🌙 Cambiar a tema claro' : '☀️ Cambiar a tema oscuro';
+    localStorage.setItem('temaYoutubeLite', temaOscuroActivo ? 'oscuro' : 'claro');
 }
 
 function aplicarColor(color){
     document.documentElement.style.setProperty('--primario', color);
+    localStorage.setItem('colorYoutubeLite', color);
+}
+
+function cambiarFiltros(){
+    filtroOrden = document.getElementById('filtro-orden').value;
+    filtroDuracion = document.getElementById('filtro-duracion').value;
+    if(vistaGuardadosActual) return;
+    ejecutarBusqueda(busquedaActual);
 }
 
 // --- CUENTA Y SESION (persistente) ---
@@ -703,16 +919,16 @@ function agregarAHistorial(video){
 
 function alternarMeGusta(video, boton){
     const idx = meGusta.findIndex(v=>v.id.videoId === video.id.videoId);
-    if(idx >= 0){ meGusta.splice(idx,1); if(boton){boton.classList.remove('activo'); boton.textContent='👍 Me gusta';} }
-    else { meGusta.unshift(video); if(boton){boton.classList.add('activo'); boton.textContent='👍 Te gusta';} }
+    if(idx >= 0){ meGusta.splice(idx,1); if(boton){boton.classList.remove('activo'); boton.textContent='👍 Me gusta';} mostrarToast('Quitado de Me gusta'); }
+    else { meGusta.unshift(video); if(boton){boton.classList.add('activo'); boton.textContent='👍 Te gusta';} mostrarToast('Agregado a Me gusta'); }
     guardarListas();
     if(videoActual && videoActual.id.videoId === video.id.videoId) actualizarBotonesPlayer();
     if(vistaGuardadosActual === 'meGusta') mostrarGuardados('meGusta');
 }
 function alternarVerMasTarde(video, boton){
     const idx = verMasTarde.findIndex(v=>v.id.videoId === video.id.videoId);
-    if(idx >= 0){ verMasTarde.splice(idx,1); if(boton){boton.classList.remove('activo'); boton.textContent='⏰ Ver más tarde';} }
-    else { verMasTarde.unshift(video); if(boton){boton.classList.add('activo'); boton.textContent='⏰ Guardado';} }
+    if(idx >= 0){ verMasTarde.splice(idx,1); if(boton){boton.classList.remove('activo'); boton.textContent='⏰ Ver más tarde';} mostrarToast('Quitado de Ver más tarde'); }
+    else { verMasTarde.unshift(video); if(boton){boton.classList.add('activo'); boton.textContent='⏰ Guardado';} mostrarToast('Guardado en Ver más tarde'); }
     guardarListas();
     if(videoActual && videoActual.id.videoId === video.id.videoId) actualizarBotonesPlayer();
     if(vistaGuardadosActual === 'verMasTarde') mostrarGuardados('verMasTarde');
@@ -750,6 +966,7 @@ function vaciarLista(tipo){
 function mostrarGuardados(tipo){
     document.querySelectorAll('.menu-desp').forEach(m=>m.classList.remove('activo'));
     marcarInicioActivo(false);
+    document.getElementById('barra-filtros').style.display = 'none';
     vistaGuardadosActual = tipo;
     paginaSiguiente = null;
     const lista = document.getElementById('lista-videos');
